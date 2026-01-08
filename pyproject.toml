@@ -1,0 +1,17 @@
+[project]
+name = "pcos"
+version = "0.1.0"
+description = "Project Closure OS CLI"
+requires-python = ">=3.10"
+dependencies = [
+    "typer",
+    "pyyaml",
+    "rich",
+]
+
+[project.scripts]
+pcos = "pcos.cli:app"
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"

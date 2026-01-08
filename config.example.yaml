@@ -1,0 +1,16 @@
+vault_name: "MyVault"
+obsidian_api_base: "http://127.0.0.1:27123"
+projects_root: "projects"
+
+github:
+  owner: "your-github-user"
+  visibility: "public"
+
+calendar:
+  calendar_id: "primary"
+  slot_minutes: 60
+  work_days: ["MO", "TU", "WE", "TH", "FR"]
+  work_hours:
+    start: "09:00"
+    end: "18:00"
+  max_events_per_day: 3
