@@ -1,5 +1,6 @@
 from pathlib import Path
 import yaml
+import sys
 
 
 class ContractError(Exception):
@@ -51,3 +52,10 @@ def validate_contract(data: dict) -> None:
     for ticket in data["tickets"]:
         if "title" not in ticket:
             raise ContractError("Each ticket must have a title")
+
+
+def read_input_text(path=None) -> str:
+    if path:
+        return path.read_text()
+    else:
+        return sys.stdin.read()
