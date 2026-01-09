@@ -9,6 +9,15 @@ from pcos.obsidian import ObsidianClient, ObsidianError
 from pcos.parser import read_input_text
 from pcos.config import get_env
 
+from typing import Optional, Set
+
+from pcos.clipboard_watcher import (
+    watch_clipboard,
+    DEFAULT_ALLOWED_TAGS,
+    DEFAULT_DEBOUNCE_SECONDS,
+    DEFAULT_CHECK_INTERVAL,
+)
+
 app = typer.Typer()
 
 
@@ -78,3 +87,43 @@ def capture(
     except ObsidianError as e:
         print(f"[red]Obsidian error:[/red] {e}")
         raise typer.Exit(1)
+    
+@app.command()
+def watch(
+    project: Optional[str] = typer.Option(
+        None,
+        help="Force project name (otherwise read from frontmatter)",
+    ),
+    allowed_tags: str = typer.Option(
+        ",".join(sorted(DEFAULT_ALLOWED_TAGS)),
+        help="Comma-separated allowed tags",
+    ),
+    debounce: float = typer.Option(
+        DEFAULT_DEBOUNCE_SECONDS,
+        help="Debounce delay in seconds",
+    ),
+    interval: float = typer.Option(
+        DEFAULT_CHECK_INTERVAL,
+        help="Clipboard polling interval in seconds",
+    ),
+):
+    """
+    Watch clipboard and automatically capture brainstorm markdown into Obsidian.
+    """
+
+    tag_set: Set[str] = {
+        tag.strip().lower()
+        for tag in allowed_tags.split(",")
+        if tag.strip()
+    }
+
+    if not tag_set:
+        print("[red]No allowed tags provided[/red]")
+        raise typer.Exit(1)
+
+    watch_clipboard(
+        project=project,
+        allowed_tags=tag_set,
+        debounce_seconds=debounce,
+        check_interval=interval,
+    )
