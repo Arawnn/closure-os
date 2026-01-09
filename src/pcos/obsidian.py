@@ -1,5 +1,8 @@
 import requests
+import urllib3
 from urllib.parse import quote
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning) # Local only for now
 
 
 class ObsidianError(Exception):
