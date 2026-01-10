@@ -197,8 +197,8 @@ def publish(project: str):
     gh.upsert_readme(owner, repo_name, readme)
 
     print("✓ Sync issues")
-    deliverables = contract.get("deliverables", [])
-    created = sync_issues(gh, owner, repo_name, deliverables)
+    tickets = contract.get("tickets", [])
+    created = sync_issues(gh, owner, repo_name, tickets)
 
     print(f"🐛 Issues created: {created}")
     print("✅ Publish done")
