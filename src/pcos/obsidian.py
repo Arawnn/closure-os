@@ -47,3 +47,11 @@ class ObsidianClient:
             raise ObsidianError(
                 f"Failed to write note {path}: {r.status_code} {r.text}"
             )
+        
+    def read_note(self, path: str) -> str:
+        url = self._build_note_url(path)
+
+        r = self.session.get(url, timeout=10)
+        r.raise_for_status()
+
+        return r.text

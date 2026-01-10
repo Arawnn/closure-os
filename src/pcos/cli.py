@@ -18,6 +18,8 @@ from pcos.clipboard_watcher import (
     DEFAULT_CHECK_INTERVAL,
 )
 
+from pcos.contract_generator import generate_contract
+
 app = typer.Typer()
 
 
@@ -59,6 +61,7 @@ def capture(
     """
     try:
         cfg = load_config(Path(config))
+        print("[green]✓ Config loaded[/green]")
     except ConfigError as e:
         print(f"[red]Config error:[/red] {e}")
         raise typer.Exit(1)
@@ -127,3 +130,29 @@ def watch(
         debounce_seconds=debounce,
         check_interval=interval,
     )
+
+@app.command()
+def contract(project: str):
+    """
+    Generate project contract from brainstorm using LLM.
+    """
+
+    from pathlib import Path
+
+    try:
+        cfg = load_config(Path("config.yaml"))
+        print("[green]✓ Config loaded[/green]")
+    except ConfigError as e:
+        print(f"[red]Config error:[/red] {e}")
+        raise typer.Exit(1)
+
+    try:
+        path = generate_contract(cfg, project)
+        print(f"[green]✓ Contract generated[/green]")
+        print(f"[dim]{path}[/dim]")
+    except Exception as e:
+        print(f"[red]Error:[/red] {e}")
+        raise typer.Exit(1)
+
+    print(f"📄 Contract generated: {path}")
+
