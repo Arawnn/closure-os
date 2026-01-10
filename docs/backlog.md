@@ -40,3 +40,8 @@ No Rabbit Hole. Ideas only after V1 closure.
 - Local metrics dashboard
 - Capture latency tracking
 - Failure replay
+
+## Managing Project
+
+- Create project automatically using mutation <https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects#managing-projects>
+- Adding items automatically <https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/adding-items-automatically>
