@@ -20,6 +20,13 @@ from pcos.clipboard_watcher import (
 
 from pcos.contract_generator import generate_contract
 
+from pcos.contracts import load_project_contract
+from pcos.github import GitHubClient
+from pcos.renderers import render_readme
+from pcos.issues import sync_issues
+
+
+
 app = typer.Typer()
 
 
@@ -155,4 +162,45 @@ def contract(project: str):
         raise typer.Exit(1)
 
     print(f"📄 Contract generated: {path}")
+
+@app.command()
+def publish(project: str):
+    """
+    Publish project to GitHub (repo, README, issues).
+    """
+    try:
+        cfg = load_config(Path("config.yaml"))
+        print("[green]✓ Config loaded[/green]")
+    except ConfigError as e:
+        print(f"[red]Config error:[/red] {e}")
+        raise typer.Exit(1)
+
+    print("✓ Loading contract")
+    contract = load_project_contract(cfg, project)
+
+    repo_name = project.lower().replace(" ", "-")
+
+    gh = GitHubClient()
+    print("✓ Getting authenticated user")
+    user = gh.get_user()
+    owner = user["login"]
+    print("✓ Resolving repo")
+    repo = gh.get_repo(owner, repo_name)
+    if not repo:
+        print(f"📦 Creating repo {owner}/{repo_name}")
+        gh.create_repo(repo_name, private=False)
+    else:
+        print(f"📦 Repo exists {owner}/{repo_name}")
+
+    print("✓ Sync README")
+    readme = render_readme(contract)
+    gh.upsert_readme(owner, repo_name, readme)
+
+    print("✓ Sync issues")
+    deliverables = contract.get("deliverables", [])
+    created = sync_issues(gh, owner, repo_name, deliverables)
+
+    print(f"🐛 Issues created: {created}")
+    print("✅ Publish done")
+
 
