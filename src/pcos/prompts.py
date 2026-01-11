@@ -12,6 +12,8 @@ Rules:
 - Maximum 9 tickets.
 - Each ticket must be independently shippable.
 - Excluded scope must be a list of strings.
+- CRITICAL: In YAML frontmatter, ALWAYS quote string values that contain special characters like ":" (colon), "|" (pipe), or "#" (hash).
+  Example: description: "text with (ex: example)" or description: 'text with #hashtag'
 
 Output format:
 1. Start with YAML frontmatter (closed with ---)

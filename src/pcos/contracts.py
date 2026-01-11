@@ -16,8 +16,19 @@ def load_project_contract(cfg: dict, project: str) -> dict:
     if not raw.startswith("---"):
         raise ValueError("Contract has no YAML frontmatter")
 
-    _, frontmatter, _ = raw.split("---", 2)
-    data = yaml.safe_load(frontmatter)
+    try:
+        _, frontmatter, _ = raw.split("---", 2)
+    except ValueError:
+        raise ValueError("Invalid YAML frontmatter format (missing closing ---)")
+
+    try:
+        data = yaml.safe_load(frontmatter)
+    except yaml.YAMLError as e:
+        raise ValueError(
+            f"Invalid YAML in contract frontmatter: {e}\n"
+            f"Hint: Values containing ':' (like 'ex: example') must be quoted in YAML.\n"
+            f"Example: description: \"text with (ex: example)\""
+        ) from e
 
     if not isinstance(data, dict):
         raise ValueError("Invalid contract format")
