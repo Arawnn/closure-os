@@ -67,3 +67,16 @@ class GitHubClient:
         )
         r.raise_for_status()
         return r.json()
+
+    def list_open_unscheduled_issues(self, owner: str, repo: str):
+        issues = self.list_issues(owner, repo)
+        return [
+            i
+            for i in issues
+            if "scheduled" not in [l["name"] for l in i["labels"]]
+            and i["state"] == "open"
+        ]
+
+    def add_label(self, owner: str, repo: str, issue_number: int, label: str):
+        url = f"{self.api}/repos/{owner}/{repo}/issues/{issue_number}/labels"
+        self.session.post(url, json={"labels": [label]}).raise_for_status()

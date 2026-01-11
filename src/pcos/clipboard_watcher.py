@@ -23,7 +23,6 @@ DEFAULT_ALLOWED_TAGS = {"brainstorm", "pcos"}
 
 running = True
 
-
 # =========================
 # Signal handling
 # =========================
@@ -34,8 +33,6 @@ def handle_sigint(sig, frame):
     print("\n🛑 Stopping clipboard watcher...")
     running = False
 
-
-signal.signal(signal.SIGINT, handle_sigint)
 
 # =========================
 # Frontmatter parsing
@@ -75,7 +72,6 @@ def extract_brainstorm_metadata(text: str, allowed_tags: Set[str]) -> Optional[d
         return None
 
     return {"project": project.strip(), "tags": normalized_tags}
-
 
 # =========================
 # Clipboard readers (WSL-friendly)
@@ -130,7 +126,6 @@ def _clipboard_via_powershell() -> str:
 
 
 
-
 def read_clipboard_text() -> str:
     """
     Read clipboard text robustly from WSL when user copies in Windows apps.
@@ -164,55 +159,64 @@ def watch_clipboard(
     debounce_seconds: float,
     check_interval: float,
 ):
-    print("🧠 Clipboard watcher started (CTRL+C to stop)")
-    print(f"• allowed_tags={sorted(allowed_tags)}")
-    print(f"• debounce={debounce_seconds}s")
-    print(
-        "• clipboard_backend="
-        + ("win32yank" if shutil.which("win32yank.exe") else "powershell")
-    )
+    global running
+    running = True
+    
+    old_handler = signal.signal(signal.SIGINT, handle_sigint)
+    
+    try:
+        print("🧠 Clipboard watcher started (CTRL+C to stop)")
+        print(f"• allowed_tags={sorted(allowed_tags)}")
+        print(f"• debounce={debounce_seconds}s")
+        print(
+            "• clipboard_backend="
+            + ("win32yank" if shutil.which("win32yank.exe") else "powershell")
+        )
 
-    last_hash: Optional[str] = None
-    last_trigger_ts: float = 0.0
+        last_hash: Optional[str] = None
+        last_trigger_ts: float = 0.0
 
-    while running:
-        try:
-            text = (read_clipboard_text() or "").strip()
+        while running:
+            try:
+                text = (read_clipboard_text() or "").strip()
 
-            if not text:
-                time.sleep(check_interval)
-                continue
+                if not text:
+                    time.sleep(check_interval)
+                    continue
 
-            metadata = extract_brainstorm_metadata(text, allowed_tags=allowed_tags)
-            if not metadata:
-                time.sleep(check_interval)
-                continue
+                metadata = extract_brainstorm_metadata(text, allowed_tags=allowed_tags)
+                if not metadata:
+                    time.sleep(check_interval)
+                    continue
 
-            resolved_project = project or metadata["project"]
+                resolved_project = project or metadata["project"]
 
-            h = hash_text(text)
-            now = time.time()
+                h = hash_text(text)
+                now = time.time()
 
-            if h != last_hash and (now - last_trigger_ts) > debounce_seconds:
-                print(f"✨ Brainstorm detected → project={resolved_project}")
+                if h != last_hash and (now - last_trigger_ts) > debounce_seconds:
+                    print(f"✨ Brainstorm detected → project={resolved_project}")
 
-                subprocess.run(
-                    ["pcos", "capture", "--project", resolved_project],
-                    input=text,
-                    text=True,
-                    check=True,
-                )
+                    subprocess.run(
+                        ["pcos", "capture", "--project", resolved_project],
+                        input=text,
+                        text=True,
+                        check=True,
+                    )
 
-                last_hash = h
-                last_trigger_ts = now
+                    last_hash = h
+                    last_trigger_ts = now
 
-        except subprocess.CalledProcessError as e:
-            print("❌ pcos capture failed:", e)
+            except subprocess.CalledProcessError as e:
+                print("❌ pcos capture failed:", e)
 
-        except Exception as e:
-            print("⚠️ Watcher error:", e)
+            except Exception as e:
+                print("⚠️ Watcher error:", e)
 
-        time.sleep(check_interval)
+            time.sleep(check_interval)
 
-    print("👋 Watcher stopped.")
+        print("👋 Watcher stopped.")
+    finally:
+        signal.signal(signal.SIGINT, old_handler)
+    
     sys.exit(0)
