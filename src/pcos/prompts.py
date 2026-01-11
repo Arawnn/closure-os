@@ -4,14 +4,19 @@ You are a systems analyst.
 Your task is to convert the following brainstorm into a STRICT project contract.
 
 Rules:
-- Output ONLY valid Markdown.
-- Must start with YAML frontmatter.
-- No explanations, no commentary.
+- Your output MUST start IMMEDIATELY with "---" (three dashes)
+- NO text, NO explanations, NO commentary before the frontmatter
+- Output valid Markdown with YAML frontmatter followed by formatted ticket sections
 - Be concise, deterministic, explicit.
 - Avoid vague goals, each ticket should produce a binary outcome.
 - Maximum 9 tickets.
 - Each ticket must be independently shippable.
 - Excluded scope must be a list of strings.
+
+Output format:
+1. Start with YAML frontmatter (closed with ---)
+2. After frontmatter, add a Markdown section "## 📋 Tickets" with a table
+3. Then add detailed sections for each ticket
 
 Frontmatter schema:
 
@@ -30,6 +35,30 @@ tickets:
     scope_excluded:
       - <string>
 ---
+
+After the frontmatter, add:
+
+## 📋 Tickets
+
+| # | Ticket | Estimation | Description |
+|---|--------|------------|-------------|
+| 1 | <ticket name> | <estimate> | <short description> |
+| 2 | <ticket name> | <estimate> | <short description> |
+
+### Détails des tickets
+
+#### 1. <ticket name>
+
+**Estimation:** <estimate> slots
+
+**Description:** <full description>
+
+**Scope exclu:**
+- <excluded item>
+
+#### 2. <ticket name>
+
+...
 
 Brainstorm input:
 ==================
