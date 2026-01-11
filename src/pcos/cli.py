@@ -25,7 +25,13 @@ from pcos.github import GitHubClient
 from pcos.renderers import render_readme
 from pcos.issues import sync_issues
 
+from datetime import datetime
+from pathlib import Path
 
+from pcos.calendar import CalendarClient
+from pcos.scheduler import plan_smart_schedule
+from pcos.contracts import load_project_contract
+from pcos.github import GitHubClient
 
 app = typer.Typer()
 
@@ -203,4 +209,60 @@ def publish(project: str):
     print(f"🐛 Issues created: {created}")
     print("✅ Publish done")
 
+@app.command()
+def schedule(project: str):
+    """
+    Schedule GitHub issues into Google Calendar.
+    """
 
+    print("✓ Loading contract + config")
+    cfg = load_config(Path("config.yaml"))
+    contract = load_project_contract(cfg, project)
+
+    gh = GitHubClient()
+    print("✓ Getting authenticated user")
+    user = gh.get_user()
+    owner = user["login"]
+    repo = project.lower()
+
+    cal = CalendarClient(
+        Path.home() / ".config/closure-os/google_credentials.json"
+    )
+
+    issues = gh.list_open_unscheduled_issues(owner, repo)
+    if not issues:
+        print("✅ No issues to schedule")
+        return
+
+    tickets = contract.get("tickets", [])
+    
+    calendar_cfg = cfg["calendar"]
+    
+    schedule = plan_smart_schedule(
+        issues=issues,
+        tickets=tickets,
+        start_date=datetime.now(),
+        work_hours=calendar_cfg["work_hours"],
+        slot_minutes=calendar_cfg["slot_minutes"],
+        work_days=calendar_cfg.get("work_days", ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]),
+        rest_days_per_week=0,
+    )
+
+    print(f"✓ Scheduling {len(schedule)} issues with smart planning")
+
+    for issue, slot, estimate in schedule:
+        title = f"[{project}] #{issue['number']} {issue['title']}"
+        description = f"{issue['html_url']}\n\nEstimation: {estimate} slots"
+
+        cal.create_event(
+            calendar_id=calendar_cfg["calendar_id"],
+            title=title,
+            description=description,
+            start=slot,
+            duration_minutes=calendar_cfg["slot_minutes"],
+        )
+
+        gh.add_label(owner, repo, issue["number"], "scheduled")
+        print(f"📅 Scheduled {title} (estimate: {estimate} slots) on {slot.strftime('%Y-%m-%d %H:%M')}")
+
+    print("✅ Scheduling done")
